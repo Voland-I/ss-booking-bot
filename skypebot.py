@@ -1,11 +1,10 @@
 import os
 
+import logging
+
 import requests
 import threading
 import time
-
-
-from tools import logger
 
 
 class SkypeBot:
@@ -44,8 +43,8 @@ class SkypeBot:
         url_workpiece = os.environ.get('CONVERSATION_ENDP_WORKPIECE')
         if url_workpiece is not None:
             url = url_workpiece.format(service=service,
-                                   conversation_id=conversation_id,
-                                   activity_id=activity_id)
+                                       conversation_id=conversation_id,
+                                       activity_id=activity_id)
 
             auth_token = 'Bearer {0}'.format(token)
             headers = {'Authorization': auth_token,
@@ -54,6 +53,6 @@ class SkypeBot:
             r = requests.post(url, headers=headers, json=payload)
 
             if 400 <= r.status_code <= 599:
-                logger.error(f'error: {r.text}')
+                logging.error(f'error: {r.text}')
         else:
-            logger.error('Environment error! No conversation endpoint!')
+            logging.error('Environment error! No conversation endpoint!')
