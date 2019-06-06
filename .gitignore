@@ -1,0 +1,9 @@
+.idea
+.vscode
+*.log
+tennis_env
+__pycache__
+*.backup
+instance
+.env
+*_dev

@@ -1,0 +1,13 @@
+language: python
+dist: xenial
+python: 3.7.3
+cache: pip3
+install:
+- pip3 install -r requirements.txt
+script:
+- pytest tests.py
+deploy:
+  provider: heroku
+  api_key:
+    secure: Kx8WzTANrSooQUK+xrf41WMTzLu0uXZiYS+vqi13KDel6rf1KU/9/+ANbBl1cR6besKCVxW6E4ix67SYdmlff8O8kdx85eWFC2gwe7Mc9KIDfNjepxJHYPBe3ymov+k6Xcx6Tp1GKcmfOQ6F8sHb8620mJzMWLeJknt/m9qn1cN+C2MPJiAmRYJcQvYt2p+rjMBRs6hgt3v0zMM5xb3d7iFxM945RxzJJdHzcq5kyhOo3C2xtteK7xx0jBkW6rw8ikI6Fo8NV16DEZi3Mo0rxyEptzXsEthAsmZExVOPUkA9m/9bfCnsR+IMyJmefgX6J85w7HrOClNCIWwJADzWLmTidy1Ieb+iSRPueg5IZrP0PmJmQecP3p6KGOL7cnqSIEkizx4TS+PRnViCFvw29sYSUSR1SpJjhBgMMB8eKjKcdmI+KFl/WE2FSP8MXcHVj3C8AbN7JmCSbhGIQhWivXk9mOnnVLagzPdUDB5ln2e/2/v3VtQDOeOlkn5ENR5kd9J7VC9TQoR4wAqe/VvZjxeoNbZu8ggzSS5JIX697gMQ0tURoV24DR9wtZU55O2hPtnkYXxfvU38h+Lg8+KKE+7YZ0LNZfqx3SDilmJlRhGSsT6BgARMD1Yj2rcdTZ8NqZE+uM/yio5wZ0JtvgPkuDy4zR9eTo2tNUSYhFNLWXo=
+  app: ssbooking-bot-dev
