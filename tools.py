@@ -9,11 +9,6 @@ import re
 import pymongo
 
 
-logger = logging.basicConfig(filename='bbot.log',
-                             level=logging.DEBUG,
-                             format='%(levelname)s:%(message)s')
-
-
 class DatabaseClient:
 
     def __init__(self, db_uri, db_name, collection_name):
@@ -46,7 +41,7 @@ class DatabaseClient:
         now = datetime.now()
         if 0 <= now.hour < 1:
             deleted = self.__collection.delete_many({})
-            logger.warning(f'Deleted {deleted.deleted_count} items!')
+            logging.warning(f'Deleted {deleted.deleted_count} items!')
 
 
 def get_time_deltas(time_to_reserve, time_reserved):
@@ -96,6 +91,7 @@ def parse_time_from_msg(str_time):
 
 def create_answer(db_instance, request_data):
     start_tmsp, end_tmsp = parse_time_from_msg(request_data['text'])
+    answer = 'Rejected!\nInvalid time!'
     if start_tmsp and end_tmsp:
         data = {
             '_id': datetime.now().timestamp(),
@@ -110,14 +106,13 @@ def create_answer(db_instance, request_data):
             header = 'Accepted!(cool)'
             db_instance.save(data)
         else:
-            header = 'Rejected! Time already have booked:|'
+            header = 'Rejected!\nTime already have booked:|'
         all_items = sorted(
             db_instance.get_all_items(), key=lambda itm: itm['start_time']
         )
 
         answer = make_response_message(header, all_items)
-        return answer
-    return
+    return answer
 
 
 

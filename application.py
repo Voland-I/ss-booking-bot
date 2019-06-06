@@ -1,12 +1,14 @@
 import os
 
+import atexit
+
 import json
 
 import copy
 
 import datetime
 
-import atexit
+import logging
 
 from flask import Flask, request, abort, make_response
 
@@ -23,6 +25,10 @@ from filters import tmsp_filter
 
 from tools import DatabaseClient, create_answer, logger
 
+
+logging.basicConfig(filename='bbot.log',
+                    level=logging.DEBUG,
+                    format='%(levelname)s:%(message)s')
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -71,7 +77,7 @@ def webhook():
             return make_response('message sent', 200)
             
         except KeyError as error:
-            logger.error(error)
+            logging.error(error)
             return make_response('Bad request', 400)
 
 
