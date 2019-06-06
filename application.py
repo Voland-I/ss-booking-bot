@@ -21,7 +21,7 @@ from config import Config
 
 from filters import tmsp_filter
 
-from tools import DatabaseClient, create_answer
+from tools import DatabaseClient, create_answer, logger
 
 
 app = Flask(__name__)
@@ -68,11 +68,11 @@ def webhook():
             payload['text'] = answer if answer else '(unamused)'
 
             bot.send_message(payload)
+            return make_response('messege sended', 200)
             
         except KeyError as error:
-            abort(403)
-
-    return make_response('Code 200')
+            logger.error(error)
+            return make_response('Bad request', 400)
 
 
 atexit.register(lambda: cron.shutdown())
