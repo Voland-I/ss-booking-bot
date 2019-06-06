@@ -23,14 +23,14 @@ class SkypeBot:
             response = requests.post(url, headers=headers, data=payload)
 
             data = response.json()
-            token = data['access_token']
+            token = data.get('access_token')
 
         def run_it():
             while True:
                 get_token()
                 time.sleep(3590)
 
-        self.t = threading.Thread(target=run_it)
+        self.t = threading.Thread(target=run_it, name='thread_get_token')
         self.t.daemon = True
         self.t.start()
 
@@ -48,7 +48,7 @@ class SkypeBot:
 
             auth_token = 'Bearer {0}'.format(token)
             headers = {'Authorization': auth_token,
-                   'Content-Type': 'Application/json', }
+                       'Content-Type': 'Application/json', }
 
             r = requests.post(url, headers=headers, json=payload)
 
