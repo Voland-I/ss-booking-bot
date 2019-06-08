@@ -4,33 +4,29 @@ import atexit
 
 import json
 
-import copy
-
-import datetime
 from pytz import reference
 
 import logging
 
-from flask import Flask, request, abort, make_response
-
 from apscheduler.schedulers.background import BackgroundScheduler
 
-import skypebot
+from flask import Flask, request, make_response
 
 from config import Config
 
-from filters import tmsp_filter
+import skypebot
 
-from tools import DatabaseClient
+from tools.filters import tmsp_filter
 
-from request_handler import invitation_handler, message_handler
+from tools.db_client import DatabaseClient
+
+from tools.request_handlers import invitation_handler, message_handler
 
 
 logging.basicConfig(filename='bbot.log',
                     level=logging.DEBUG,
                     format='%(levelname)s:%(message)s')
 
-# TODO: rewrite handlers as dict with funcs
 app = Flask(__name__)
 app.config.from_object(Config)
 app.config['DEBUG'] = True

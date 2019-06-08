@@ -1,6 +1,4 @@
-
-
-MESSAGE_WORKPIECE = {
+MESSAGE = {
                     'serviceUrl': '',
                     'type': '',
                     'from': {
@@ -18,11 +16,16 @@ MESSAGE_WORKPIECE = {
                     'replyToId': '',
                 }
 
-QUERY_START_TIME_SUBSTRACT = {
+QUERY_START_TIME_SUBTRACT = {
             '$addFields': {
                 'start_times_sb': {
                     '$abs': {
-                        '$subtract': ['$start_time', 0]
+                        '$subtract': [{
+                            '$min': ['$start_time', 'start_time_item']
+                        },
+                        {
+                            '$max': ['$end_time', 'end_time_item']
+                         }]
                     }
                 }
             }
@@ -56,5 +59,5 @@ ITEM_IN_DB = {
         'start_time': r'start_tmsp',
         'end_time': r'end_tmsp',
         'delta': r'end_tmsp - start_tmsp',
-        'tz': r'local_tz'
+        'tz': r'local_tz',
 }
