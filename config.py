@@ -21,6 +21,8 @@ class Config:
 
     DEBUG = False
 
+    BOT_NAME = get_value_from_env('BOT_NAME')
+
     SECRET_KEY = get_value_from_env('SECRET_KEY')
     APP_ID = get_value_from_env('APP_ID')
     APP_PASS = get_value_from_env('APP_PASSWORD')
