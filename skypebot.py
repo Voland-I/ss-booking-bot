@@ -9,7 +9,7 @@ import time
 
 class SkypeBot:
     
-    def __init__(self, client_id, client_secret):
+    def __init__(self, client_id, client_secret, bot_name):
 
         def get_token():
             global token
@@ -30,9 +30,14 @@ class SkypeBot:
                 get_token()
                 time.sleep(3590)
 
+        self.__bot_name = bot_name
         self.t = threading.Thread(target=run_it, name='thread_get_token')
         self.t.daemon = True
         self.t.start()
+
+    @property
+    def name(self):
+        return self.__bot_name
 
     @staticmethod
     def send_message(payload):

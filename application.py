@@ -7,6 +7,7 @@ import json
 import copy
 
 import datetime
+from pytz import reference
 
 import logging
 
@@ -16,30 +17,34 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 import skypebot
 
-
-from data import MESSAGE_WORKPIECE
-
 from config import Config
 
 from filters import tmsp_filter
 
-from tools import DatabaseClient, create_answer
+from tools import DatabaseClient
+
+from request_handler import invitation_handler, message_handler
 
 
 logging.basicConfig(filename='bbot.log',
                     level=logging.DEBUG,
                     format='%(levelname)s:%(message)s')
 
+# TODO: rewrite handlers as dict with funcs
 app = Flask(__name__)
 app.config.from_object(Config)
 app.config['DEBUG'] = True
 app.template_folder = os.path.join(app.config['BASE_DIR'], 'templates')
 tmsp_filter = app.template_filter()(tmsp_filter)
 
-bot = skypebot.SkypeBot(app.config['APP_ID'], app.config['APP_PASS'])
+bot = skypebot.SkypeBot(app.config['APP_ID'],
+                        app.config['APP_PASS'],
+                        app.config['BOT_NAME'])
+
 db_instance = DatabaseClient(app.config['DB_URI'],
-                             app.config['DB_NAME'],
-                             app.config['COLLECTION_NAME'])
+                             app.config['DB_NAME'])
+
+dt_localizer = reference.LocalTimezone()
 
 cron = BackgroundScheduler()
 cron.add_job(func=db_instance.delete_all_docs, trigger='interval', seconds=3000)
@@ -54,31 +59,27 @@ def hello():
 @app.route('/api/messages', methods=['GET', 'POST', ])
 def webhook():
     if request.method == 'POST':
+        response_msg = None
         try:
-            data = json.loads(request.data)
-            payload = copy.deepcopy(MESSAGE_WORKPIECE)
+            request_data = json.loads(request.data)
+            if request_data.get('membersAdded') is not None:
+                members_added = request_data['membersAdded']
+                members_added = [member['name'] for member in members_added]
+                if bot.name in members_added:
+                    invitation_handler(request_data, db_instance, dt_localizer)
+                    response_msg = 'invitation accepted!'
 
-            now = datetime.datetime.utcnow()
-            now_str = now.isoformat(timespec='milliseconds')
+            if request_data['type'] == 'message':
+                payload = message_handler(request_data, db_instance)
+                bot.send_message(payload)
+                response_msg = 'message sent'
 
-            payload['serviceUrl'] = data['serviceUrl']
-            payload['type'] = data['type']
-            payload['from']['id'] = data['recipient']['id']
-            payload['from']['name'] = data['recipient']['name']
-            payload['recipient']['id'] = data['from']['id']
-            payload['recipient']['name'] = data["from"]['name']
-            payload['conversation']['id'] = data['conversation']['id']
-            payload['replyToId'] = data['id']
-            payload['timestamp'] = now_str
-            answer = create_answer(db_instance, data)
-            payload['text'] = answer if answer else '(unamused)'
-
-            bot.send_message(payload)
-            return make_response('messege sended', 200)
-            
+            return make_response(response_msg, 200)
         except KeyError as error:
             logging.error(error)
             return make_response('Bad request', 400)
+
+    return make_response('Got it', 200)
 
 
 atexit.register(lambda: cron.shutdown())
