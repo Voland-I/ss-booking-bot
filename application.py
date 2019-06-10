@@ -29,22 +29,19 @@ logging.basicConfig(filename='bbot.log',
 
 app = Flask(__name__)
 app.config.from_object(Config)
-app.config['DEBUG'] = True
 app.template_folder = os.path.join(app.config['BASE_DIR'], 'templates')
 tmsp_filter = app.template_filter()(tmsp_filter)
 
-bot = skypebot.SkypeBot(app.config['APP_ID'],
-                        app.config['APP_PASS'],
-                        app.config['BOT_NAME'])
+bot = skypebot.SkypeBot()
 
 db_instance = DatabaseClient(app.config['DB_URI'],
                              app.config['DB_NAME'])
 
 dt_localizer = reference.LocalTimezone()
 
-cron = BackgroundScheduler()
-cron.add_job(func=db_instance.delete_all_docs, trigger='interval', seconds=3000)
-cron.start()
+db_cron = BackgroundScheduler()
+db_cron.add_job(func=db_instance.delete_all_docs, trigger='interval', seconds=3000)
+db_cron.start()
 
 
 @app.route('/')
@@ -78,4 +75,4 @@ def webhook():
     return make_response('Got it', 200)
 
 
-atexit.register(lambda: cron.shutdown())
+atexit.register(lambda: db_cron.shutdown())

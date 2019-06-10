@@ -27,7 +27,7 @@ class SkypeBot:
                                            client_secret=client_secret)
 
         headers = {'Content-Type': 'application/x-www-form-urlencoded', }
-        r = requests.post(url, headers, data=payload)
+        r = requests.post(url, headers=headers, data=payload)
         r_data = r.json()
         self.__token = r_data.get('access_token')
 
