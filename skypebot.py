@@ -6,52 +6,51 @@ import requests
 import threading
 import time
 
+from tools.system_tools import get_value_from_env
+
 
 class SkypeBot:
     
-    def __init__(self, client_id, client_secret, bot_name):
+    def __init__(self):
 
-        def get_token():
-            global token
+        self.__bot_name = get_value_from_env('BOT_NAME')
+        self.__token = None
+        self.__set_token_attempts = 5
 
-            url = os.environ.get('BOT_CON_AUTH_URI')
-            payload_workpiece = os.environ.get('BOT_CON_PAYLOAD_WORKPIECE')
-            payload = payload_workpiece.format(client_id=client_id,
-                                               client_secret=client_secret)
+    def __set_token(self):
+        client_id = get_value_from_env('APP_ID')
+        client_secret = get_value_from_env('APP_PASSWORD')
 
-            headers = {'Content-Type': 'application/x-www-form-urlencoded', }
-            response = requests.post(url, headers=headers, data=payload)
+        url = get_value_from_env('BOT_CON_AUTH_URI')
+        payload_workpiece = get_value_from_env('BOT_CON_PAYLOAD_WORKPIECE')
+        payload = payload_workpiece.format(client_id=client_id,
+                                           client_secret=client_secret)
 
-            data = response.json()
-            token = data.get('access_token')
-
-        def run_it():
-            while True:
-                get_token()
-                time.sleep(3590)
-
-        self.__bot_name = bot_name
-        self.t = threading.Thread(target=run_it, name='thread_get_token')
-        self.t.daemon = True
-        self.t.start()
+        headers = {'Content-Type': 'application/x-www-form-urlencoded', }
+        r = requests.post(url, headers, data=payload)
+        r_data = r.json()
+        self.__token = r_data.get('access_token')
 
     @property
     def name(self):
         return self.__bot_name
 
-    @staticmethod
-    def send_message(payload):
+    def send_message(self, payload):
         service = payload['serviceUrl']
         conversation_id = payload['conversation']['id']
         activity_id = payload["replyToId"]
 
-        url_workpiece = os.environ.get('CONVERSATION_ENDP_WORKPIECE')
+        url_workpiece = get_value_from_env('CONVERSATION_ENDP_WORKPIECE')
         if url_workpiece is not None:
             url = url_workpiece.format(service=service,
                                        conversation_id=conversation_id,
                                        activity_id=activity_id)
 
-            auth_token = 'Bearer {0}'.format(token)
+            i = 0
+            while (self.__token is None) and (i <= self.__set_token_attempts):
+                self.__set_token()
+
+            auth_token = 'Bearer {0}'.format(self.__token)
             headers = {'Authorization': auth_token,
                        'Content-Type': 'Application/json', }
 
