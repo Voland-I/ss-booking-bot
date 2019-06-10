@@ -16,7 +16,7 @@ from config import Config
 
 import skypebot
 
-from tools.filters import tmsp_filter
+from tools.template_filters import tmsp_filter
 
 from tools.db_client import DatabaseClient
 
