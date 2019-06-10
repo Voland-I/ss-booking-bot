@@ -1,23 +1,10 @@
-import os
-import sys
+from os.path import abspath, dirname
 
-
-class EnvironmentVariableMissed(EnvironmentError):
-    pass
-
-
-def get_value_from_env(value_name):
-    value = os.environ.get(value_name)
-    if value is None:
-        raise EnvironmentVariableMissed(
-                f'environment variable {value_name} not found'
-        )
-
-    return value
+from tools.system_tools import get_value_from_env
 
 
 class Config:
-    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+    BASE_DIR = abspath(dirname(__file__))
 
     DEBUG = False
 
