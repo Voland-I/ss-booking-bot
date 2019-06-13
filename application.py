@@ -52,14 +52,14 @@ def hello():
 @app.route('/api/messages', methods=['GET', 'POST', ])
 def webhook():
     if request.method == 'POST':
-        response_msg = None
+        response_msg = ''
         try:
             request_data = json.loads(request.data)
             if request_data.get('membersAdded') is not None:
                 members_added = request_data['membersAdded']
                 members_added = [member['name'] for member in members_added]
                 if bot.name in members_added:
-                    invitation_handler(request_data, db_instance, dt_localizer)
+                    invitation_handler(request_data, db_instance)
                     response_msg = 'invitation accepted!'
 
             if request_data['type'] == 'message':

@@ -1,17 +1,16 @@
-from datetime import datetime
-
-from tools.messege_handlers import create_answer, get_now_local_datetime
+from tools.message_handlers import create_answer, get_now_local_datetime
 from tools.static_data import MESSAGE
 
 
-def invitation_handler(request_data, db_instance, localtime):
-    local_dt, _ = get_now_local_datetime(request_data)
-    tz_name = localtime.tzname(local_dt)
+def invitation_handler(request_data, db_instance):
+    local_dt = get_now_local_datetime(request_data)
+    tz_name = local_dt.tzname()
     db_instance.set_tz(tz_name)
 
 
 def message_handler(request_data, db_instance):
-    _, now_local_str = get_now_local_datetime(request_data)
+    local_dt = get_now_local_datetime(request_data)
+    local_dt_str = local_dt.isoformat()
 
     answer = create_answer(db_instance, request_data)
 
@@ -23,7 +22,7 @@ def message_handler(request_data, db_instance):
     MESSAGE['recipient']['name'] = request_data["from"]['name']
     MESSAGE['conversation']['id'] = request_data['conversation']['id']
     MESSAGE['replyToId'] = request_data['id']
-    MESSAGE['timestamp'] = now_local_str
+    MESSAGE['timestamp'] = local_dt_str
     MESSAGE['text'] = answer
 
     return MESSAGE

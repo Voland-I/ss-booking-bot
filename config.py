@@ -16,4 +16,3 @@ class Config:
 
     DB_URI = get_value_from_env('MONGODB_URI')
     DB_NAME = get_value_from_env('MONGODB_NAME')
-    COLLECTION_NAME = get_value_from_env('COLLECTION_NAME')
