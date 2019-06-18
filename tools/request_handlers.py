@@ -1,15 +1,19 @@
-from tools.message_handlers import create_answer, get_now_local_datetime
+from tools.message_handlers import create_answer, get_local_now
 from tools.static_data import MESSAGE
 
 
 def invitation_handler(request_data, db_instance):
-    local_dt = get_now_local_datetime(request_data)
-    tz_name = local_dt.tzname()
-    db_instance.set_tz(tz_name)
+    local_tz_name = request_data['entities'][0]['timezone']
+    # entities = request_data.get('entities') or [{'timezone': 'Europe/Uzhgorod', }, ]
+    # local_tz_name = entities[0]['timezone']
+    db_instance.set_tz(local_tz_name)
 
 
 def message_handler(request_data, db_instance):
-    local_dt = get_now_local_datetime(request_data)
+    local_tz_name = request_data['entities'][0]['timezone']
+    # entities = request_data.get('entities') or [{'timezone': 'Europe/Uzhgorod', }, ]
+    # local_tz_name = entities[0]['timezone']
+    local_dt = get_local_now(local_tz_name)
     local_dt_str = local_dt.isoformat()
 
     answer = create_answer(db_instance, request_data)

@@ -18,13 +18,13 @@ MESSAGE = {
 
 QUERY_START_TIME_SUBTRACT = {
             '$addFields': {
-                'start_times_sb': {
+                'start_deltas_sb': {
                     '$abs': {
                         '$subtract': [{
-                            '$min': ['$start_time', 'start_time_item']
+                            '$min': ['$start_delta', 'start_delta_item']
                         },
                         {
-                            '$max': ['$end_time', 'end_time_item']
+                            '$max': ['$end_delta', 'end_delta_item']
                          }]
                     }
                 }
@@ -34,7 +34,7 @@ QUERY_START_TIME_SUBTRACT = {
 QUERY_DELTA_SUM = {
     '$addFields': {
         'deltas_sum': {
-            '$add': ['$delta', 0]
+            '$add': ['$start_end_delta', 0]
         }
     }
 }
@@ -42,13 +42,13 @@ QUERY_DELTA_SUM = {
 QUERY_DELTA_MATCHES = {
     '$match': {
             '$expr': {
-                '$lte': ['$start_times_sb', '$deltas_sum']
+                '$lte': ['$start_deltas_sb', '$deltas_sum']
             }
     }
 }
 
 QUERY_ALL_ITEMS_SORT_BY_STIME = {
-    '$sort': {'start_time': 1},
+    '$sort': {'start_delta': 1},
 }
 
 ITEM_IN_DB = {
@@ -56,8 +56,10 @@ ITEM_IN_DB = {
         'user_id': r'request_data["from"]["id"]',
         'user_name': r'request_data["from"]["name"]',
         'group_id': r'request_data["conversation"]["id"]',
-        'start_time': r'start_tmsp',
-        'end_time': r'end_tmsp',
-        'delta': r'end_tmsp - start_tmsp',
-        'tz': r'local_tz',
+        'start_delta': r'start_delta',
+        'end_delta': r'end_delta',
+        'start_end_delta': r'end_delta - start_delta',
+        'start_time_str': '',
+        'end_time_str': '',
+        'tzname': ''
 }
