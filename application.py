@@ -4,19 +4,15 @@ import atexit
 
 import json
 
-from pytz import reference
-
 import logging
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from flask import Flask, request, make_response
+from flask import Flask, request, make_response, views
 
 from config import Config
 
 import skypebot
-
-from tools.template_filters import tmsp_filter
 
 from tools.db_client import DatabaseClient
 
@@ -30,30 +26,32 @@ logging.basicConfig(filename='bbot.log',
 app = Flask(__name__)
 app.config.from_object(Config)
 app.template_folder = os.path.join(app.config['BASE_DIR'], 'templates')
-tmsp_filter = app.template_filter()(tmsp_filter)
 
 bot = skypebot.SkypeBot()
 
 db_instance = DatabaseClient(app.config['DB_URI'],
                              app.config['DB_NAME'])
 
-dt_localizer = reference.LocalTimezone()
-
 db_cron = BackgroundScheduler()
-db_cron.add_job(func=db_instance.delete_all_docs, trigger='interval', seconds=3000)
+db_cron.add_job(func=db_instance.delete_all_docs,
+                trigger='interval',
+                seconds=3000)
+
 db_cron.start()
 
 
-@app.route('/')
-def hello():
-    return 'Hello! I\'m working just now!'
+class Hello(views.MethodView):
+    def get(self):
+        return f'Hello, my name is {app.config["BOT_NAME"]}'
 
 
-@app.route('/api/messages', methods=['GET', 'POST', ])
-def webhook():
-    if request.method == 'POST':
-        response_msg = ''
+class WebHook(views.MethodView):
+    def get(self):
+        return make_response(app.config['BOT_NAME'], 200)
+
+    def post(self):
         try:
+            response_msg = ''
             request_data = json.loads(request.data)
             if request_data.get('membersAdded') is not None:
                 members_added = request_data['membersAdded']
@@ -72,7 +70,7 @@ def webhook():
             logging.error(error)
             return make_response('Bad request', 400)
 
-    return make_response('Got it', 200)
 
+app.add_url_rule('/api/messages', view_func=WebHook.as_view('webhook'))
 
 atexit.register(lambda: db_cron.shutdown())

@@ -70,7 +70,7 @@ def create_answer(db_instance, request_data):
         if is_saved:
             header = 'Accepted!(cool)'
         else:
-            header = 'Rejected!\nTime already have booked:|'
+            header = 'Rejected!\nTime already has booked:|'
         all_items = db_instance.get_all_items(ITEM_IN_DB)
 
         answer = make_response_message(header, all_items)
