@@ -3,16 +3,16 @@ from tools.static_data import MESSAGE
 
 
 def invitation_handler(request_data, db_instance):
-    local_tz_name = request_data['entities'][0]['timezone']
-    # entities = request_data.get('entities') or [{'timezone': 'Europe/Uzhgorod', }, ]
-    # local_tz_name = entities[0]['timezone']
+    # local_tz_name = request_data['entities'][0]['timezone']
+    entities = request_data.get('entities') or [{'timezone': 'Europe/Uzhgorod', }, ]
+    local_tz_name = entities[0]['timezone']
     db_instance.set_tz(local_tz_name)
 
 
 def message_handler(request_data, db_instance):
-    local_tz_name = request_data['entities'][0]['timezone']
-    # entities = request_data.get('entities') or [{'timezone': 'Europe/Uzhgorod', }, ]
-    # local_tz_name = entities[0]['timezone']
+    # local_tz_name = request_data['entities'][0]['timezone']
+    entities = request_data.get('entities') or [{'timezone': 'Europe/Uzhgorod', }, ]
+    local_tz_name = entities[0]['timezone']
     local_dt = get_local_now(local_tz_name)
     local_dt_str = local_dt.isoformat()
 
