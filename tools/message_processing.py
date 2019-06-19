@@ -3,7 +3,7 @@ import pytz
 
 import re
 
-from tools.static_data import ITEM_IN_DB
+from tools.static_data import ITEM_IN_DB, MESSAGE
 
 
 def get_local_now(tzname):
@@ -29,7 +29,7 @@ def make_response_message(header, all_items):
 
 
 def parse_time_delta(msg):
-    time_regex = r'(\d{1,2}:\d{1,2})\s*[-,]\s*(\d{1,2}:\d{1,2})'
+    time_regex = r'(\d{1,2}:\d{2})\s*[-,]\s*(\d{1,2}:\d{2})'
     result = re.findall(time_regex, msg)
     if len(result) >= 1:
         start_time_str, end_time_str = result[0]
@@ -72,3 +72,24 @@ def create_answer(db_instance, request_data):
 
         answer = make_response_message(header, all_items)
     return answer
+
+
+def message_handler(request_data, db_instance):
+    local_tz_name = request_data['entities'][0]['timezone']
+    local_dt = get_local_now(local_tz_name)
+    local_dt_str = local_dt.isoformat()
+
+    answer = create_answer(db_instance, request_data)
+
+    MESSAGE['serviceUrl'] = request_data['serviceUrl']
+    MESSAGE['type'] = request_data['type']
+    MESSAGE['from']['id'] = request_data['recipient']['id']
+    MESSAGE['from']['name'] = request_data['recipient']['name']
+    MESSAGE['recipient']['id'] = request_data['from']['id']
+    MESSAGE['recipient']['name'] = request_data["from"]['name']
+    MESSAGE['conversation']['id'] = request_data['conversation']['id']
+    MESSAGE['replyToId'] = request_data['id']
+    MESSAGE['timestamp'] = local_dt_str
+    MESSAGE['text'] = answer
+
+    return MESSAGE

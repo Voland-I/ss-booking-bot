@@ -1,10 +1,6 @@
-import os
-
 import logging
 
 import requests
-import threading
-import time
 
 from tools.system_tools import get_value_from_env
 

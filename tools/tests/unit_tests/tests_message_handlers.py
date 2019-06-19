@@ -10,11 +10,11 @@ from unittest import mock
 
 sys.path.insert(0, getcwd())
 
-from tools.message_handlers import get_local_now, \
-                                   make_row_from_item, \
-                                   make_response_message, \
-                                   parse_time_delta, \
-                                   create_answer
+from tools.message_processing import get_local_now, \
+                                     make_row_from_item, \
+                                     make_response_message, \
+                                     parse_time_delta, \
+                                     create_answer
 
 
 class TestGetNowLocalDatetime(unittest.TestCase):
@@ -33,7 +33,7 @@ class TestGetNowLocalDatetime(unittest.TestCase):
 
         self.DATA_STUB['entities'][0]['timezone'] = self.local_tz.zone
 
-    @mock.patch('tools.message_handlers.datetime')
+    @mock.patch('tools.message_processing.datetime')
     def test_correct_local_time(self, dt_mock):
         dt_mock.utcnow.return_value = self.utc_now
 
@@ -95,7 +95,7 @@ class TestMakeResponseMessage(unittest.TestCase):
 
             self.items.append(item)
 
-    @mock.patch('tools.message_handlers.make_row_from_item')
+    @mock.patch('tools.message_processing.make_row_from_item')
     def test_how_many_times_make_row_from_item_was_called(self, make_row_mock):
 
         make_row_mock.side_effect = self.make_row_from_item_mock
@@ -103,7 +103,7 @@ class TestMakeResponseMessage(unittest.TestCase):
 
         self.assertEqual(make_row_mock.call_count, len(self.items))
 
-    @mock.patch('tools.message_handlers.make_row_from_item')
+    @mock.patch('tools.message_processing.make_row_from_item')
     def test_with_what_args_make_row_from_item_was_called(self, make_row_mock):
         make_row_mock.side_effect = self.make_row_from_item_mock
 
@@ -155,7 +155,7 @@ class TestParseTimeDelta(unittest.TestCase):
             'end_time_str': self.end_time.strftime('%H-%M')
         }
 
-    @mock.patch('tools.message_handlers.datetime')
+    @mock.patch('tools.message_processing.datetime')
     def test_with_correct_time_input(self, dt_mock):
         test_message = (f'book: {self.ITEMS_STUB["correct"]["start_time_str"]}'
                         f'-{self.ITEMS_STUB["correct"]["end_time_str"]}')
@@ -243,8 +243,8 @@ class TestCreateAnswer(unittest.TestCase):
         self.db_instance_mock.get_all_items.return_value = []
         self.db_instance_mock.save.return_value = True
 
-    @mock.patch('tools.message_handlers.parse_time_delta')
-    @mock.patch('tools.message_handlers.make_response_message')
+    @mock.patch('tools.message_processing.parse_time_delta')
+    @mock.patch('tools.message_processing.make_response_message')
     def test_time_not_booked_header_accepted(self, make_r_mock, parse_t_mock):
         parse_t_mock.return_value = (self.start_delta, self.end_delta), \
                                     (self.start_time_str, self.end_time_str)
@@ -255,8 +255,8 @@ class TestCreateAnswer(unittest.TestCase):
 
         self.assertEqual(result, 'Accepted!(cool)')
 
-    @mock.patch('tools.message_handlers.parse_time_delta')
-    @mock.patch('tools.message_handlers.make_response_message')
+    @mock.patch('tools.message_processing.parse_time_delta')
+    @mock.patch('tools.message_processing.make_response_message')
     def test_time_already_booked_header_rejected(self, make_r_mock, parse_t_mock):
         parse_t_mock.return_value = (self.start_delta, self.end_delta), \
                                     (self.start_time_str, self.end_time_str)
@@ -268,7 +268,7 @@ class TestCreateAnswer(unittest.TestCase):
 
         self.assertIn('Rejected!', result)
 
-    @mock.patch('tools.message_handlers.parse_time_delta')
+    @mock.patch('tools.message_processing.parse_time_delta')
     def test_time_not_entered_header_is_rejected(self, parse_t_mock):
         parse_t_mock.return_value = (None, None)
 

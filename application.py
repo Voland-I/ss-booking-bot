@@ -16,7 +16,7 @@ import skypebot
 
 from tools.db_client import DatabaseClient
 
-from tools.request_handlers import message_handler
+from tools.message_processing import message_handler
 
 
 logging.basicConfig(filename='bbot.log',
