@@ -61,10 +61,7 @@ def create_answer(db_instance, request_data):
         ITEM_IN_DB['start_end_delta'] = end_delta - start_delta
         ITEM_IN_DB['start_time_str'] = start_time_str
         ITEM_IN_DB['end_time_str'] = end_time_str
-        # ITEM_IN_DB['tzname'] = request_data['entities'][0]['timezone']
-        entities = request_data.get('entities') or [{'timezone': 'Europe/Uzhgorod', }, ]
-        local_tz_name = entities[0]['timezone']
-        ITEM_IN_DB['tzname'] = local_tz_name
+        ITEM_IN_DB['tzname'] = request_data['entities'][0]['timezone']
 
         is_saved = db_instance.save(ITEM_IN_DB)
         if is_saved:

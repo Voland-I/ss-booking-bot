@@ -16,7 +16,7 @@ import skypebot
 
 from tools.db_client import DatabaseClient
 
-from tools.request_handlers import invitation_handler, message_handler
+from tools.request_handlers import message_handler
 
 
 logging.basicConfig(filename='bbot.log',
@@ -53,13 +53,6 @@ class WebHook(views.MethodView):
         try:
             response_msg = ''
             request_data = json.loads(request.data)
-            if request_data.get('membersAdded') is not None:
-                members_added = request_data['membersAdded']
-                members_added = [member['name'] for member in members_added]
-                if bot.name in members_added:
-                    invitation_handler(request_data, db_instance)
-                    response_msg = 'invitation accepted!'
-
             if request_data['type'] == 'message':
                 payload = message_handler(request_data, db_instance)
                 bot.send_message(payload)

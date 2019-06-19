@@ -65,7 +65,8 @@ class DatabaseClient:
             tz = pytz.timezone(tzname)
             utc_now = datetime.utcnow().astimezone(pytz.UTC)
             local_now = utc_now.astimezone(tz)
-            if 0 <= local_now.hour < 1:
+            local_now_hour = (local_now + local_now.utcoffset()).hour
+            if 0 <= local_now_hour < 1:
                 collection = self.__collections.get(group_id)
                 if collection is not None:
                     deleted = collection.delete_many({})
