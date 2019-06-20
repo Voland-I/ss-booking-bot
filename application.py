@@ -1,21 +1,14 @@
 import os
-
+import logging
+import json
 import atexit
 
-import json
-
-import logging
-
+from flask import Flask, request, make_response, views
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from flask import Flask, request, make_response, views
-
-from config import Config
-
+import config
 import skypebot
-
 from tools.db_client import DatabaseClient
-
 from tools.message_processing import message_handler
 
 
@@ -24,8 +17,9 @@ logging.basicConfig(filename='bbot.log',
                     format='%(levelname)s:%(message)s')
 
 app = Flask(__name__)
-app.config.from_object(Config)
-app.template_folder = os.path.join(app.config['BASE_DIR'], 'templates')
+app.config.from_object(config.Config)
+app.template_folder = os.path.join(app.config['BASE_DIR'],
+                                   'templates')
 
 bot = skypebot.SkypeBot()
 
@@ -54,16 +48,19 @@ class WebHook(views.MethodView):
             response_msg = ''
             request_data = json.loads(request.data)
             if request_data['type'] == 'message':
-                payload = message_handler(request_data, db_instance)
+                payload = message_handler(request_data,
+                                          db_instance)
                 bot.send_message(payload)
                 response_msg = 'message sent'
 
-            return make_response(response_msg, 200)
         except KeyError as error:
             logging.error(error)
             return make_response('Bad request', 400)
+        else:
+            return make_response(response_msg, 200)
 
 
-app.add_url_rule('/api/messages', view_func=WebHook.as_view('webhook'))
+app.add_url_rule('/api/messages',
+                 view_func=WebHook.as_view('webhook'))
 
 atexit.register(lambda: db_cron.shutdown())

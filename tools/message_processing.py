@@ -1,7 +1,7 @@
 from datetime import datetime
-import pytz
-
 import re
+
+import pytz
 
 from tools.static_data import ITEM_IN_DB, MESSAGE
 
@@ -46,7 +46,8 @@ def parse_time_delta(msg):
 
 
 def create_answer(db_instance, request_data):
-    deltas, start_end_times_str = parse_time_delta(request_data['text'])
+    message = request_data['text']
+    deltas, start_end_times_str = parse_time_delta(message)
 
     answer = 'Rejected!\nInvalid time!'
     if deltas is not None:
