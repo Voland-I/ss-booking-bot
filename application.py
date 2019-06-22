@@ -52,12 +52,14 @@ class WebHook(views.MethodView):
         try:
             request_data = json.loads(request.data)
             if request_data['type'] == 'message':
-                payload = get_response_message(request_data, db_instance)
+                payload = get_response_message(db_instance, request_data)
                 bot.send_message(payload)
 
         except KeyError as error:
             logging.error(error)
             return make_response('Bad request', 400)
+
+        return make_response('Got it!', 200)
 
 
 app.add_url_rule('/api/messages', view_func=WebHook.as_view('webhook'))

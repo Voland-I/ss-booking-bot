@@ -95,7 +95,7 @@ def get_response_message(db_instance, request_data):
         timezone_name = 'UTC'
 
     local_now_iso = get_local_now_iso(timezone_name)
-    all_items_in_collection = None
+    all_items_in_collection = []
 
     header = 'Rejected!\nInvalid time!'
     time_deltas, time_string = parse_time_delta(request_message)
