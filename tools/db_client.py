@@ -52,11 +52,8 @@ class DatabaseClient:
         return False
 
     def save(self, item):
-        if not self.is_exists(item):
-            group_id = item['group_id']
-            self._collections[group_id].insert_one(item)
-            return True
-        return False
+        group_id = item['group_id']
+        self._collections[group_id].insert_one(item)
 
     def get_all_items(self, item):
         group_id = item['group_id']
