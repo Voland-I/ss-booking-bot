@@ -4,10 +4,7 @@ import logging
 import pytz
 import pymongo
 
-from tools.static_data import (QUERY_DELTA_MATCHES,
-                               QUERY_DELTA_SUM,
-                               QUERY_START_TIME_SUBTRACT,
-                               QUERY_ALL_ITEMS_SORT_BY_STIME)
+from tools.time_tools import get_tzname_from_request
 
 
 class DatabaseClient:
@@ -18,55 +15,127 @@ class DatabaseClient:
         self._tz_store = {}
         self._collections = {}
 
-    def set_tz(self, item):
-        group_id = item['group_id']
-        tzname = item['tzname']
-        self._tz_store[tzname] = group_id
+    def _set_group(self, group_id):
+        self._collections[group_id] = self._db_instance[f'coll_{group_id[:8]}']
+
+    def _set_tz(self, group_id, tzname):
+        self._tz_store[group_id] = tzname
+
+    @staticmethod
+    def create_item(parsed_time, request_data):
+        deltas, start_end_times_str = parsed_time
+        start_delta, end_delta = deltas
+        start_time_str, end_time_str = start_end_times_str
+        tzname = get_tzname_from_request(request_data)
+        db_item = {
+            'user_id': request_data['from']['id'],
+            'user_name': request_data['from']['name'],
+            'group_id': request_data['conversation']['id'],
+            'start_delta': start_delta,
+            'end_delta': end_delta,
+            'start_end_delta': end_delta - start_delta,
+            'start_time_str': start_time_str,
+            'end_time_str': end_time_str,
+            'tzname': tzname
+        }
+
+        return db_item
+
+    @staticmethod
+    def _get_start_end_deltas_subtract(start_delta, end_delta):
+        query = {
+            '$addFields': {
+                'start_deltas_sb': {
+                    '$abs': {
+                        '$subtract': [{
+                            '$min': ['$start_delta', start_delta]
+                        },
+                        {
+                            '$max': ['$end_delta', end_delta]
+                         }]
+                    }
+                }
+            }
+        }
+
+        return query
+
+    @staticmethod
+    def _get_deltas_sum(start_end_delta):
+        query = {
+            '$addFields': {
+                'deltas_sum': {
+                    '$add': ['$start_end_delta', start_end_delta]
+                }
+            }
+        }
+
+        return query
+
+    @staticmethod
+    def _get_deltas_matches():
+        query = {
+            '$match': {
+                '$expr': {
+                    '$lte': ['$start_deltas_sb', '$deltas_sum']
+                }
+            }
+        }
+
+        return query
+
+    @staticmethod
+    def _get_all_items_sorted_by_time():
+        query = {
+            '$sort': {'start_delta': 1},
+        }
+
+        return query
 
     def is_exists(self, item):
         group_id = item['group_id']
         start_delta, end_delta = item['start_delta'], item['end_delta']
         start_end_delta = item['start_end_delta']
 
-        if group_id not in self._collections:
-            self._collections[group_id] = \
-                self._db_instance[f'coll_{group_id[:8]}']
-            self.set_tz(item)
-
         collection = self._collections[group_id]
 
         # todo: make row for queries and format args into it
-        QUERY_START_TIME_SUBTRACT['$addFields']['start_deltas_sb']['$abs']['$subtract'][0]['$min'][1] = start_delta
-        QUERY_START_TIME_SUBTRACT['$addFields']['start_deltas_sb']['$abs']['$subtract'][1]['$max'][1] = end_delta
-        QUERY_DELTA_SUM['$addFields']['deltas_sum']['$add'][-1] = start_end_delta
+        deltas_subtract_query = self._get_start_end_deltas_subtract(start_delta,
+                                                                    end_delta)
+        deltas_sum_query = self._get_deltas_sum(start_end_delta)
+        deltas_matches_query = self._get_deltas_matches()
 
-        query_pipeline = [
-            QUERY_START_TIME_SUBTRACT,
-            QUERY_DELTA_SUM,
-            QUERY_DELTA_MATCHES,
+        queries_pipeline = [
+            deltas_subtract_query,
+            deltas_sum_query,
+            deltas_matches_query,
         ]
-        items = list(collection.aggregate(query_pipeline))
+        items = list(collection.aggregate(queries_pipeline))
 
         if items:
             return True
         return False
 
+    def set_collection_and_tzname_if_not_exist(self, group_id, tzname):
+        if group_id not in self._collections:
+            self._set_group(group_id)
+        if group_id not in self._tz_store:
+            self._set_tz(group_id, tzname)
+
     def save(self, item):
         group_id = item['group_id']
         self._collections[group_id].insert_one(item)
 
-    def get_all_items(self, item):
-        group_id = item['group_id']
-        collection = self._collections.get(group_id)
-        if collection is not None:
-            query_pipeline = [QUERY_ALL_ITEMS_SORT_BY_STIME, ]
-            return list(collection.aggregate(query_pipeline))
-        return []
+    def get_all_items(self, group_id):
+        collection = self._collections[group_id]
+        sort_by_start_time_query = self._get_all_items_sorted_by_time()
+        queries_pipeline = [sort_by_start_time_query, ]
+        return list(collection.aggregate(queries_pipeline))
 
     def delete_all_docs(self):
-        for tzname, group_id in self._tz_store.items():
+        for group_id, tzname in self._tz_store.items():
             tz = pytz.timezone(tzname)
-            utc_now = datetime.utcnow().astimezone(pytz.UTC)
+            utc_now = datetime.utcnow()
             local_now = utc_now.astimezone(tz)
             local_now_hour = (local_now + local_now.utcoffset()).hour
             if 0 <= local_now_hour < 1:
