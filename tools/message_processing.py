@@ -18,7 +18,7 @@ def make_message_text(header, all_items):
     return text_message
 
 
-def create_message_response_object(request_data, response_msg, local_now_iso):
+def create_response_object(request_data, response_msg, local_now_iso):
     response_object = {
         'serviceUrl': request_data['serviceUrl'],
         'type': request_data['type'],
@@ -41,7 +41,7 @@ def create_message_response_object(request_data, response_msg, local_now_iso):
     return response_object
 
 
-def message_processing(db_instance, command_processor_instance, request_data):
+def message_processing(db_instance, cp_instance, request_data):
     tzname = get_tzname_from_request(request_data)
     local_now_iso = get_local_now_iso(tzname)
 
@@ -50,20 +50,21 @@ def message_processing(db_instance, command_processor_instance, request_data):
     time_strings = parse_time_deltas(request_message)
     time_deltas = make_time_deltas_from_str(*time_strings)
 
-    response_message = 'Not valid time or command'
+    response_message = 'Incorrect time or command:|'
     if all(time_deltas):
         response_message = booking_processing(db_instance,
                                               time_deltas,
                                               time_strings,
                                               request_data)
 
-    command = command_processor_instance.parse_command(request_message)
-    if command is not None:
-        response_message = command_processor_instance.process_command(command, group_id)
+    command = cp_instance.parse_command(request_message)
+    if command:
+        response_message = cp_instance.process_command(command,
+                                                       group_id=group_id)
 
-    response_object = create_message_response_object(request_data,
-                                                     response_message,
-                                                     local_now_iso)
+    response_object = create_response_object(request_data,
+                                             response_message,
+                                             local_now_iso)
     return response_object
 
 
@@ -79,27 +80,3 @@ def booking_processing(db_instance, time_deltas, time_strings, request_data):
     response_message = make_message_text(header, all_items_in_collection)
 
     return response_message
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

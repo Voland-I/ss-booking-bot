@@ -32,12 +32,12 @@ command_processor = CommandsProcessor(db_instance)
 db_cron = BackgroundScheduler()
 db_cron.add_job(func=db_instance.delete_all_docs,
                 trigger='interval',
-                seconds=30)
+                seconds=3000)
 
 app_cron = BackgroundScheduler()
 app_cron.add_job(func=bot.fake_request,
                  trigger='interval',
-                 seconds=30)
+                 seconds=300)
 
 db_cron.start()
 app_cron.start()
@@ -55,11 +55,16 @@ class WebHook(views.MethodView):
             group_id = request_data['conversation']['id']
             tzname = get_tzname_from_request(request_data)
             db_instance.set_collection_and_tzname_if_not_exist(group_id, tzname)
+
             if request_type == 'message':
-                payload = message_processing(db_instance, command_processor, request_data)
+                payload = message_processing(db_instance,
+                                             command_processor,
+                                             request_data)
+
                 bot.send_message(payload)
             if request_type == 'conversationUpdate':
-                payload = conversation_update_processing(db_instance, request_data)
+                payload = conversation_update_processing(db_instance,
+                                                         request_data)
                 bot.send_message(payload)
 
         except KeyError as error:

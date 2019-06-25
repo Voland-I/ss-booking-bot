@@ -13,6 +13,7 @@ env_test_file_path = os.path.join(os.path.dirname(__file__),
 load_dotenv(os.path.join(env_test_file_path))
 
 from application import app
+from tools.system_tools import get_value_from_env
 
 
 class TestWebhook(unittest.TestCase):
@@ -22,7 +23,7 @@ class TestWebhook(unittest.TestCase):
         self._client = app.test_client()
 
     def test_get_bot_name(self):
-        bot_name = self._app.config['BOT_NAME']
+        bot_name = get_value_from_env('BOT_NAME')
         webhook_uri = '/api/messages'
 
         r = self._client.get(webhook_uri)

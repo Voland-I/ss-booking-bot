@@ -23,7 +23,8 @@ class SkypeBot:
             url = get_value_from_env('BOT_CON_AUTH_URI')
             payload_workpiece = get_value_from_env('BOT_CON_PAYLOAD_WORKPIECE')
             payload = payload_workpiece.format(client_id=client_id,
-                                           client_secret=client_secret)
+                                               client_secret=client_secret)
+
             headers = {'Content-Type': 'application/x-www-form-urlencoded', }
             r = requests.post(url, headers=headers, data=payload)
             r_data = r.json()
