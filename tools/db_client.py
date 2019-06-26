@@ -126,6 +126,11 @@ class DatabaseClient:
         group_id = item['group_id']
         self._collections[group_id].insert_one(item)
 
+    def delete_item(self, group_id, item_id):
+        query = {'_id': item_id, }
+        collection = self._collections[group_id]
+        collection.delete_one(query)
+
     def get_all_items(self, group_id):
         collection = self._collections[group_id]
         sort_by_start_time_query = self._get_all_items_sorted_by_time()

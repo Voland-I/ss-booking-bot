@@ -6,11 +6,11 @@ from tools.time_tools import get_local_now_iso, \
 
 def make_message_text(header, all_items):
     message_rows_list = [header, ]
-    for item in all_items:
+    for row_number, item in enumerate(all_items, start=1):
         start_time_str = item['start_time_str']
         end_time_str = item['end_time_str']
         user_name = item['user_name']
-        row = f'{start_time_str: ^7.7}-{end_time_str: ^7.7} {user_name}'
+        row = f'{row_number:^5}-{start_time_str: ^7.7}-{end_time_str: ^7.7} {user_name}'
         message_rows_list.append(row)
 
     text_message = '\n'.join([row for row in message_rows_list])
@@ -46,7 +46,6 @@ def message_processing(db_instance, cp_instance, request_data):
     local_now_iso = get_local_now_iso(tzname)
 
     request_message = request_data['text']
-    group_id = request_data['conversation']['id']
     time_strings = parse_time_deltas(request_message)
     time_deltas = make_time_deltas_from_str(*time_strings)
 
@@ -57,10 +56,11 @@ def message_processing(db_instance, cp_instance, request_data):
                                               time_strings,
                                               request_data)
 
-    command = cp_instance.parse_command(request_message)
-    if command:
-        response_message = cp_instance.process_command(command,
-                                                       group_id=group_id)
+    command_name, command_entity = cp_instance.parse_command(request_message)
+    if all((command_name, command_entity)):
+        response_message = cp_instance.process_command(command_name,
+                                                       command_entity,
+                                                       request_data=request_data)
 
     response_object = create_response_object(request_data,
                                              response_message,

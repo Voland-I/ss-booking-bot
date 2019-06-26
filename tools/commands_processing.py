@@ -41,9 +41,28 @@ class CommandsProcessor:
 
         # This attribute contains collection with commands witch
         # CommandProcessor class supports.  But user can imitate this
-        self._standard_commands = \
-            {'list': (re.compile(r'\blist'), self._list_handler),
-             'help': (re.compile(r'\bhelp'), self._help_handler), }
+        self._standard_commands = {
+            'list': (
+                (
+                    lambda row: re.findall(r'\blist\b', row),
+                    lambda row: 'list' if not row else ''
+                ),
+                self._list_handler
+            ),
+
+            'help': (
+                (
+                    lambda row: re.findall(r'\bhelp\b', row),
+                ),
+                self._help_handler
+            ),
+            'cancel': (
+                (
+                    lambda row: re.findall(r'\bcancel\s*\d{1,1}', row),
+                ),
+                self._cancel_handler
+            )
+        }
 
         # user can defines himself commands and command-handlers
         # by passing 'commands' parameter or use standard
@@ -59,13 +78,14 @@ class CommandsProcessor:
         :rtype: str
         '''
 
-        for comm_name, (command_regex, handler) in self._commands.items():
-            comm_result = command_regex.search(text_message)
-            if comm_result:
-                return comm_result[0]
-        return ''
+        for comm_name, (command_parsers, handler) in self._commands.items():
+            for command_parser in command_parsers:
+                matches = command_parser(text_message)
+                if matches:
+                    return comm_name, matches[0]
+        return None, None
 
-    def process_command(self, command, **kwargs):
+    def process_command(self, command_name, command_entity, **kwargs):
         '''
 
         :param command: Name of the command.
@@ -75,13 +95,14 @@ class CommandsProcessor:
         :return: The result of executing appropriate handler.
         '''
 
-        regex_and_command_handler = self._commands.get(command)
+        regex_and_command_handler = self._commands.get(command_name)
         if regex_and_command_handler is not None:
             _, handler = regex_and_command_handler
-            return handler(**kwargs)
-        return self._help_handler()
+            result = handler(command_entity, **kwargs)
+            return result
+        return self._help_handler(command_entity, **kwargs)
 
-    def _help_handler(self, **kwargs):
+    def _help_handler(self, command_entity, **kwargs):
         '''
 
         :param kwargs: Possible named args.
@@ -92,7 +113,7 @@ class CommandsProcessor:
 
         return self._HELP_MESSAGE
 
-    def _list_handler(self, **kwargs):
+    def _list_handler(self, command_entity, **kwargs):
         '''
 
         :param kwargs: Possible named args.
@@ -101,8 +122,32 @@ class CommandsProcessor:
         :rtype: str
         '''
 
-        group_id = kwargs['group_id']
+        request_data = kwargs['request_data']
+        group_id = request_data['conversation']['id']
         all_items = self._db_instance.get_all_items(group_id)
         header = 'All reservations:' if all_items else 'No reservation'
         response_message = make_message_text(header, all_items)
         return response_message
+
+    def _cancel_handler(self, command_entity, **kwargs):
+        request_data = kwargs['request_data']
+        group_id = request_data['conversation']['id']
+        user_id = request_data['from']['id']
+        index_to_delete = re.findall(r'\d{1,1}', command_entity)
+        if index_to_delete:
+            index_to_delete = int(index_to_delete[0]) - 1
+        all_items = self._db_instance.get_all_items(group_id)
+        response_message = 'No such item'
+        if index_to_delete < len(all_items):
+            item_to_delete = all_items[index_to_delete]
+            response_message = 'Rejected to delete item, you aren\'t owner'
+            if item_to_delete['user_id'] == user_id:
+                item_id = item_to_delete['_id']
+                self._db_instance.delete_item(group_id, item_id)
+                response_message = (f'Deleted slot for '
+                                    f'{item_to_delete["start_time_str"]}-'
+                                    f'{item_to_delete["end_time_str"]}'
+                                    f'for user {item_to_delete["user_name"]}')
+
+        return response_message
+

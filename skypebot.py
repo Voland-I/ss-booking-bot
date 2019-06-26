@@ -35,29 +35,30 @@ class SkypeBot:
         return self._bot_name
 
     def fake_request(self):
-        requests.get(self._service_uri)
+        fake_request_uri = self._service_uri + 'api/messages'
+        requests.get(fake_request_uri)
 
-    def send_message(self, payload):
+    def send_message(self, payload, is_chat=False):
         service = payload['serviceUrl']
         conversation_id = payload['conversation']['id']
         activity_id = payload["replyToId"]
 
-        url_workpiece = get_value_from_env('CONVERSATION_ENDP_WORKPIECE')
-        if url_workpiece is not None:
-            url = url_workpiece.format(service=service,
-                                       conversation_id=conversation_id,
-                                       activity_id=activity_id)
+        url_workpiece = get_value_from_env('USER_CONVERSATION_ENDP_WORKPIECE')
+        if is_chat:
+            url_workpiece = get_value_from_env('CHAT_CONVERSATION_ENDP_WORKPIECE')
 
-            self._set_token()
-            auth_token = 'Bearer {0}'.format(self._token)
-            headers = {
-                'Authorization': auth_token,
-                'Content-Type': 'Application/json',
-            }
+        url = url_workpiece.format(service=service,
+                                   conversation_id=conversation_id,
+                                   activity_id=activity_id)
+        self._set_token()
+        auth_token = 'Bearer {0}'.format(self._token)
+        headers = {
+            'Authorization': auth_token,
+            'Content-Type': 'Application/json',
+        }
 
-            r = requests.post(url, headers=headers, json=payload)
+        r = requests.post(url, headers=headers, json=payload)
 
-            if 400 <= r.status_code <= 599:
-                logging.error(f'error: {r.text}')
-        else:
-            logging.error('Environment error! No conversation endpoint!')
+        if 400 <= r.status_code <= 599:
+            logging.error(f'error: {r.text}')
+
