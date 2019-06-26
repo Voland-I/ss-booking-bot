@@ -1,6 +1,6 @@
 from tools.system_tools import get_value_from_env
 from tools.time_tools import get_tzname_from_request, get_local_now_iso
-from tools.message_processing import create_response_object
+from tools.message_processing import create_response_object_for_user
 
 
 _WELCOME_MESSAGE = '''
@@ -21,7 +21,7 @@ def conversation_update_processing(db_instance, request_data):
                 db_instance.set_tz(group_id, tzname)
                 response_message = _WELCOME_MESSAGE
 
-                response_object = create_response_object(request_data,
+                response_object = create_response_object_for_user(request_data,
                                                          response_message,
                                                          local_now_iso)
 

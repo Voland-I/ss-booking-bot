@@ -1,7 +1,8 @@
 from tools.time_tools import get_local_now_iso, \
                              get_tzname_from_request, \
                              parse_time_deltas, \
-                             make_time_deltas_from_str
+                             make_time_deltas_from_str, \
+                             is_past
 
 
 def make_message_text(header, all_items):
@@ -10,7 +11,7 @@ def make_message_text(header, all_items):
         start_time_str = item['start_time_str']
         end_time_str = item['end_time_str']
         user_name = item['user_name']
-        row = f'{row_number:^5}-{start_time_str: ^7.7}-{end_time_str: ^7.7} {user_name}'
+        row = f'{row_number:^}. {start_time_str: ^7.7}-{end_time_str: ^7.7} {user_name}'
         message_rows_list.append(row)
 
     text_message = '\n'.join([row for row in message_rows_list])
@@ -18,7 +19,7 @@ def make_message_text(header, all_items):
     return text_message
 
 
-def create_response_object(request_data, response_msg, local_now_iso):
+def create_activity_object(request_data, response_msg, local_now_iso):
     response_object = {
         'serviceUrl': request_data['serviceUrl'],
         'type': request_data['type'],
@@ -41,6 +42,27 @@ def create_response_object(request_data, response_msg, local_now_iso):
     return response_object
 
 
+def create_response_object_for_user(request_data, response_msg, local_now_iso):
+    activity_object = create_activity_object(request_data, response_msg, local_now_iso)
+    response_object = {
+        'bot': {
+            'id': request_data['recipient']['id'],
+            'name': request_data['recipient']['id']
+        },
+        'isGroup': 'false',
+        'members': [
+            {
+                'id': request_data['from']['id'],
+                'name': request_data['from']['name']
+            },
+        ],
+        'topicName': 'Answer for your action',
+        'activity': activity_object
+        }
+
+    return response_object
+
+
 def message_processing(db_instance, cp_instance, request_data):
     tzname = get_tzname_from_request(request_data)
     local_now_iso = get_local_now_iso(tzname)
@@ -50,7 +72,7 @@ def message_processing(db_instance, cp_instance, request_data):
     time_deltas = make_time_deltas_from_str(*time_strings)
 
     response_message = 'Incorrect time or command:|'
-    if all(time_deltas):
+    if all(time_deltas) and not is_past(request_data, time_strings):
         response_message = booking_processing(db_instance,
                                               time_deltas,
                                               time_strings,
@@ -62,7 +84,7 @@ def message_processing(db_instance, cp_instance, request_data):
                                                        command_entity,
                                                        request_data=request_data)
 
-    response_object = create_response_object(request_data,
+    response_object = create_activity_object(request_data,
                                              response_message,
                                              local_now_iso)
     return response_object

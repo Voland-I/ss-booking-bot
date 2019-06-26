@@ -24,7 +24,9 @@ class CommandsProcessor:
         \tHH:MM-HH:MM
         or
         \tHH.MM-HH.MM
-        To see the list of booked times type 'list'
+        To see the list of booked times type 'list'\n
+        To cancel one of your booked time-slot\n
+        type 'cancel <number of slot>
     '''
 
     def __init__(self, db_instance, commands=None):
@@ -45,7 +47,7 @@ class CommandsProcessor:
             'list': (
                 (
                     lambda row: re.findall(r'\blist\b', row),
-                    lambda row: 'list' if not row else ''
+                    lambda row: ['list', ] if not row else ''
                 ),
                 self._list_handler
             ),
@@ -88,8 +90,10 @@ class CommandsProcessor:
     def process_command(self, command_name, command_entity, **kwargs):
         '''
 
-        :param command: Name of the command.
-        :type command: str
+        :param command_name: Name of the command.
+        :type command_name: str
+        :param command_entity: parsed text with command name and parameters.
+        :type command_entity: str
         :param kwargs: Possible named args.
         :type kwargs: dict
         :return: The result of executing appropriate handler.
@@ -105,6 +109,8 @@ class CommandsProcessor:
     def _help_handler(self, command_entity, **kwargs):
         '''
 
+        :param command_entity: parsed text with command and parameters.
+        :type command_entity: str
         :param kwargs: Possible named args.
         :type kwargs: dict
         :return: Text message with help-information.
@@ -116,6 +122,7 @@ class CommandsProcessor:
     def _list_handler(self, command_entity, **kwargs):
         '''
 
+        :param command_entity: parsed text with command and parameters.
         :param kwargs: Possible named args.
         :type: dict
         :return: Formatted text message with all reservations.
@@ -130,12 +137,20 @@ class CommandsProcessor:
         return response_message
 
     def _cancel_handler(self, command_entity, **kwargs):
+        '''
+
+        :param command_entity: parsed text with command and parameters.
+        :type command_entity: str
+        :param kwargs: Possible named args.
+        :type kwargs: dict
+        :return: Formatted text message with all reservations.
+        '''
         request_data = kwargs['request_data']
         group_id = request_data['conversation']['id']
         user_id = request_data['from']['id']
-        index_to_delete = re.findall(r'\d{1,1}', command_entity)
+        index_to_delete = re.search(r'\d{1,1}', command_entity)
         if index_to_delete:
-            index_to_delete = int(index_to_delete[0]) - 1
+            index_to_delete = int(index_to_delete.group(0)) - 1
         all_items = self._db_instance.get_all_items(group_id)
         response_message = 'No such item'
         if index_to_delete < len(all_items):

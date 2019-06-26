@@ -38,14 +38,12 @@ class SkypeBot:
         fake_request_uri = self._service_uri + 'api/messages'
         requests.get(fake_request_uri)
 
-    def send_message(self, payload, is_chat=False):
+    def send_message(self, payload):
         service = payload['serviceUrl']
         conversation_id = payload['conversation']['id']
         activity_id = payload["replyToId"]
 
-        url_workpiece = get_value_from_env('USER_CONVERSATION_ENDP_WORKPIECE')
-        if is_chat:
-            url_workpiece = get_value_from_env('CHAT_CONVERSATION_ENDP_WORKPIECE')
+        url_workpiece = get_value_from_env('CHAT_CONVERSATION_ENDP_WORKPIECE')
 
         url = url_workpiece.format(service=service,
                                    conversation_id=conversation_id,
