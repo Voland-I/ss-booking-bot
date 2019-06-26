@@ -16,12 +16,16 @@ def make_time_deltas_from_str(start_time_str, end_time_str):
     if start_time_str is not None and end_time_str is not None:
         start_time_str = re.sub('\.', ':', start_time_str)
         end_time_str = re.sub('\.', ':', end_time_str)
-        start_time = datetime.strptime(start_time_str, '%H:%M').time()
-        end_time = datetime.strptime(end_time_str, '%H:%M').time()
-        start_delta = 60*start_time.hour + start_time.minute
-        end_delta = 60*end_time.hour + end_time.minute
-        if start_time < end_time:
-            return start_delta, end_delta
+        try:
+            start_time = datetime.strptime(start_time_str, '%H:%M').time()
+            end_time = datetime.strptime(end_time_str, '%H:%M').time()
+        except ValueError:
+            pass
+        else:
+            start_delta = 60*start_time.hour + start_time.minute
+            end_delta = 60*end_time.hour + end_time.minute
+            if start_time < end_time:
+                return start_delta, end_delta
     return None, None
 
 
