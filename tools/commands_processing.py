@@ -6,6 +6,7 @@
 import re
 
 from tools.message_processing import make_message_text
+from tools.static_data import CANCEL_COMMAND_HEADERS, MESSAGES, LIST_COMMAND_HEADERS
 
 
 class CommandsProcessor:
@@ -19,14 +20,16 @@ class CommandsProcessor:
 
     # This attribute contains help-message as response to
     # 'help' command.
-    _HELP_MESSAGE = ''' To book time you need to enter \n
-        prefer time interval in one of the next formats:\n
-        \tHH:MM-HH:MM
+    _HELP_MESSAGE = '''
+        <p style="font-size: 12px;"> To book time you need to enter \n
+        prefer time interval in one of the next formats:</p>\n
+        \t<b>HH:MM-HH:MM</b>
         or
-        \tHH.MM-HH.MM
-        To see the list of booked times type 'list'\n
+        \t<b>HH.MM-HH.MM</b>\n
+        <p style="font-size: 12px">To see the \n
+        list of booked times type <b>'list'</b>\n
         To cancel one of your booked time-slot\n
-        type 'cancel <number of slot>
+        type <b>'cancel <number of slot>'</b></p>
     '''
 
     def __init__(self, db_instance, commands=None):
@@ -117,7 +120,7 @@ class CommandsProcessor:
         :rtype: str
         '''
 
-        return self._HELP_MESSAGE
+        return MESSAGES['help']
 
     def _list_handler(self, command_entity, **kwargs):
         '''
@@ -132,7 +135,7 @@ class CommandsProcessor:
         request_data = kwargs['request_data']
         group_id = request_data['conversation']['id']
         all_items = self._db_instance.get_all_items(group_id)
-        header = 'All reservations:' if all_items else 'No reservation'
+        header = LIST_COMMAND_HEADERS['not_empty'] if all_items else LIST_COMMAND_HEADERS['empty']
         response_message = make_message_text(header, all_items)
         return response_message
 
@@ -152,14 +155,14 @@ class CommandsProcessor:
         if index_to_delete:
             index_to_delete = int(index_to_delete.group(0)) - 1
         all_items = self._db_instance.get_all_items(group_id)
-        response_message = 'No such item'
+        response_message = CANCEL_COMMAND_HEADERS['not_exist']
         if index_to_delete < len(all_items):
             item_to_delete = all_items[index_to_delete]
-            response_message = 'Rejected to delete item, you aren\'t owner'
+            response_message = CANCEL_COMMAND_HEADERS['rejected']
             if item_to_delete['user_id'] == user_id:
                 item_id = item_to_delete['_id']
                 self._db_instance.delete_item(group_id, item_id)
-                response_message = (f'Deleted slot for '
+                response_message = (f'{CANCEL_COMMAND_HEADERS["deleted"]} '
                                     f'{item_to_delete["start_time_str"]}-'
                                     f'{item_to_delete["end_time_str"]}'
                                     f'for user {item_to_delete["user_name"]}')

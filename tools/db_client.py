@@ -77,7 +77,7 @@ class DatabaseClient:
         query = {
             '$match': {
                 '$expr': {
-                    '$lte': ['$start_deltas_sb', '$deltas_sum']
+                    '$lt': ['$start_deltas_sb', '$deltas_sum']
                 }
             }
         }
