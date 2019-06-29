@@ -9,7 +9,7 @@ from tools.static_data import GAME_STATUSES, HEADERS
 
 
 def make_message_text(header, all_items):
-    message_rows_list = []
+    message_rows_list = [header, ]
     for row_number, item in enumerate(all_items, start=1):
         start_time_str = item['start_time_str']
         end_time_str = item['end_time_str']
