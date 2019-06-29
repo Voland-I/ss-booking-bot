@@ -14,10 +14,10 @@ def make_message_text(header, all_items):
         start_time_str = item['start_time_str']
         end_time_str = item['end_time_str']
         user_name = item['user_name']
-        row = f'{row_number}.{start_time_str}-{end_time_str} {user_name}-{get_game_status(item, GAME_STATUSES)} \n'
+        row = f'{row_number}.{start_time_str}-{end_time_str} {user_name}-{get_game_status(item, GAME_STATUSES)} '
         message_rows_list.append(row)
 
-    text_message = ''.join(message_rows_list)
+    text_message = '\n'.join(message_rows_list)
     print(text_message, 'text message')
     # text_message = header + text_message
 

@@ -72,7 +72,7 @@ def get_game_status(item, statuses):
     start_delta, end_delta = item['start_delta'], item['end_delta']
     now_delta = 60*local_now.hour + local_now.minute
     game_status = statuses['will_be']
-    if start_delta < now_delta and end_delta > now_delta:
+    if start_delta <= now_delta and end_delta >= now_delta:
         game_status = statuses['in_process']
     if end_delta < now_delta:
         game_status = statuses['played']
