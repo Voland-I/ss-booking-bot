@@ -4,9 +4,12 @@
 
 
 import re
+from datetime import datetime
+import pytz
 
 from tools.message_processing import make_message_text
 from tools.static_data import CANCEL_COMMAND_HEADERS, MESSAGES, LIST_COMMAND_HEADERS
+from tools.time_tools import get_tzname_from_request
 
 
 class CommandsProcessor:
@@ -151,7 +154,11 @@ class CommandsProcessor:
         request_data = kwargs['request_data']
         group_id = request_data['conversation']['id']
         user_id = request_data['from']['id']
+        tzname = get_tzname_from_request(request_data)
+        tz = pytz.timezone(tzname)
         index_to_delete = re.search(r'\d{1,1}', command_entity)
+        local_now = datetime.now(tz=tz).time()
+        local_now_delta = 60*local_now.hour + local_now.minute
         if index_to_delete:
             index_to_delete = int(index_to_delete.group(0)) - 1
         all_items = self._db_instance.get_all_items(group_id)
@@ -160,9 +167,11 @@ class CommandsProcessor:
             item_to_delete = all_items[index_to_delete]
             response_message = CANCEL_COMMAND_HEADERS['rejected']
             if item_to_delete['user_id'] == user_id:
-                item_id = item_to_delete['_id']
-                self._db_instance.delete_item(group_id, item_id)
-                response_message = (f'{CANCEL_COMMAND_HEADERS["deleted"]} '
+                response_message = CANCEL_COMMAND_HEADERS['game_in_past']
+                if item_to_delete['end_delta'] <= local_now_delta:
+                    item_id = item_to_delete['_id']
+                    self._db_instance.delete_item(group_id, item_id)
+                    response_message = (f'{CANCEL_COMMAND_HEADERS["deleted"]} '
                                     f'{item_to_delete["start_time_str"]}-'
                                     f'{item_to_delete["end_time_str"]}'
                                     f'for user {item_to_delete["user_name"]}')

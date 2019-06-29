@@ -24,7 +24,8 @@ To see all available commands type help!
 CANCEL_COMMAND_HEADERS = {
     'not_exist': 'No such item',
     'rejected': 'Rejected to delete item, you aren\'t owner',
-    'deleted': 'Deleted slot for'
+    'deleted': 'Deleted slot for',
+    'game_in_past': 'This game already ended!'
 }
 
 LIST_COMMAND_HEADERS = {
