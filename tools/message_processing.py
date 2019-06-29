@@ -14,7 +14,7 @@ def make_message_text(header, all_items):
         start_time_str = item['start_time_str']
         end_time_str = item['end_time_str']
         user_name = item['user_name']
-        row = f'{row_number}.{start_time_str}-{end_time_str} {user_name}-{get_game_status(item, GAME_STATUSES)}'
+        row = f'{row_number}.{start_time_str}-{end_time_str} {user_name}-{get_game_status(item, GAME_STATUSES)} \n'
         message_rows_list.append(row)
 
     text_message = ''.join(message_rows_list)
