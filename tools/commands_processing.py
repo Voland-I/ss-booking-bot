@@ -8,8 +8,12 @@ from datetime import datetime
 import pytz
 
 from tools.message_processing import make_message_text
-from tools.static_data import CANCEL_COMMAND_HEADERS, MESSAGES, LIST_COMMAND_HEADERS
-from tools.time_tools import get_tzname_from_request
+from tools.time_tools import get_local_now_time, get_delta
+from tools.static_data import (CANCEL_COMMAND_HEADERS,
+                               MESSAGES,
+                               LIST_COMMAND_HEADERS)
+
+from tools.data_handling import get_value_from_data_object
 
 
 class CommandsProcessor:
@@ -135,11 +139,16 @@ class CommandsProcessor:
         :rtype: str
         '''
 
-        request_data = kwargs['request_data']
-        group_id = request_data['conversation']['id']
+        request_data = get_value_from_data_object(kwargs, ('request_data', ))
+        group_id = get_value_from_data_object(request_data,
+                                              ('conversation', 'id'))
+
         all_items = self._db_instance.get_all_items(group_id)
-        header = LIST_COMMAND_HEADERS['not_empty'] if all_items else LIST_COMMAND_HEADERS['empty']
+        key = 'not_empty' if all_items else 'empty'
+        header = get_value_from_data_object(LIST_COMMAND_HEADERS, (key, ))
+
         response_message = make_message_text(header, all_items)
+
         return response_message
 
     def _cancel_handler(self, command_entity, **kwargs):
@@ -151,30 +160,43 @@ class CommandsProcessor:
         :type kwargs: dict
         :return: Formatted text message with all reservations.
         '''
-        request_data = kwargs['request_data']
-        group_id = request_data['conversation']['id']
-        user_id = request_data['from']['id']
-        tzname = get_tzname_from_request(request_data)
-        tz = pytz.timezone(tzname)
-        index_to_delete = re.search(r'\d{1,1}', command_entity)
-        local_now = datetime.now(tz=tz).time()
-        local_now_delta = 60*local_now.hour + local_now.minute
+        request_data = get_value_from_data_object(kwargs, ('request_data', ))
+        group_id = get_value_from_data_object(request_data,
+                                              ('conversation', 'id'))
+
+        user_id = get_value_from_data_object(request_data,
+                                             ('from', 'id'))
+
+        tzname = get_value_from_data_object(request_data,
+                                            ('entities', 0, 'timezone'),
+                                            default_value='UTC')
+
+        all_items = self._db_instance.get_all_items(group_id)
+        index_to_delete = re.search(r'\d{1,}', command_entity)
+        local_now = get_local_now_time(tzname)
+        local_now_delta = get_delta(local_now)
         if index_to_delete:
             index_to_delete = int(index_to_delete.group(0)) - 1
-        all_items = self._db_instance.get_all_items(group_id)
-        response_message = CANCEL_COMMAND_HEADERS['not_exist']
-        if index_to_delete < len(all_items):
-            item_to_delete = all_items[index_to_delete]
-            response_message = CANCEL_COMMAND_HEADERS['rejected']
-            if item_to_delete['user_id'] == user_id:
-                response_message = CANCEL_COMMAND_HEADERS['game_in_past']
-                if item_to_delete['end_delta'] <= local_now_delta:
-                    item_id = item_to_delete['_id']
-                    self._db_instance.delete_item(group_id, item_id)
-                    response_message = (f'{CANCEL_COMMAND_HEADERS["deleted"]} '
-                                    f'{item_to_delete["start_time_str"]}-'
-                                    f'{item_to_delete["end_time_str"]}'
-                                    f'for user {item_to_delete["user_name"]}')
+            response_message = get_value_from_data_object(CANCEL_COMMAND_HEADERS,
+                                                          ('not_owner', ))
+
+            if index_to_delete <= len(all_items):
+                item_to_delete = all_items[index_to_delete]
+
+                if item_to_delete['user_id'] == user_id:
+                    response_message = CANCEL_COMMAND_HEADERS['in_past']
+                    if item_to_delete['start_delta'] >= local_now_delta:
+                        item_id = item_to_delete['_id']
+                        self._db_instance.delete_item(group_id, item_id)
+
+                        response_message = (f'{CANCEL_COMMAND_HEADERS["deleted"]} '
+                                            f'{item_to_delete["start_time_str"]}-'
+                                            f'{item_to_delete["end_time_str"]}'
+                                            f'for user {item_to_delete["user_name"]}')
+
+            return response_message
+
+        response_message = get_value_from_data_object(CANCEL_COMMAND_HEADERS,
+                                                      ('not_exists', ))
 
         return response_message
-

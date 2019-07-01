@@ -22,10 +22,11 @@ To see all available commands type help!
 }
 
 CANCEL_COMMAND_HEADERS = {
-    'not_exist': 'No such item',
-    'rejected': 'Rejected to delete item, you aren\'t owner',
+    'not_exists': 'No such item',
+    'not_owner': 'Rejected to delete item, you aren\'t owner',
     'deleted': 'Deleted slot for',
-    'game_in_past': 'This game already ended!'
+    'any_number': 'Please, select a number of time-slot',
+    'in_past': 'This game already ended!'
 }
 
 LIST_COMMAND_HEADERS = {

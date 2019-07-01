@@ -9,7 +9,7 @@ import config
 import skypebot
 from tools.db_client import DatabaseClient
 from tools.message_processing import message_processing
-from tools.time_tools import get_tzname_from_request
+from tools.data_handling import get_value_from_data_object
 from tools.system_tools import get_value_from_env
 from tools.users_manage import conversation_update_processing
 from tools.commands_processing import CommandsProcessor
@@ -53,7 +53,10 @@ class WebHook(views.MethodView):
             request_data = json.loads(request.data)
             request_type = request_data['type']
             group_id = request_data['conversation']['id']
-            tzname = get_tzname_from_request(request_data)
+            tzname = get_value_from_data_object(request_data,
+                                                ('entities', 0, 'timezone'),
+                                                default_value='UTC')
+
             db_instance.set_collection_and_tzname_if_not_exist(group_id, tzname)
 
             if request_type == 'message':
@@ -68,6 +71,7 @@ class WebHook(views.MethodView):
                 bot.send_message(payload)
 
         except KeyError as error:
+            print(error)
             logging.error(error)
             return make_response('Bad request', 400)
 

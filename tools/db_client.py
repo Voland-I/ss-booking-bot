@@ -4,7 +4,7 @@ import logging
 import pytz
 import pymongo
 
-from tools.time_tools import get_tzname_from_request
+from tools.time_tools import get_value_from_data_object
 
 
 class DatabaseClient:
@@ -26,7 +26,10 @@ class DatabaseClient:
         deltas, start_end_times_str = parsed_time
         start_delta, end_delta = deltas
         start_time_str, end_time_str = start_end_times_str
-        tzname = get_tzname_from_request(request_data)
+        tzname = get_value_from_data_object(request_data,
+                                            ('entities', 0, 'timezone'),
+                                            default_value='UTC')
+
         db_item = {
             'user_id': request_data['from']['id'],
             'user_name': request_data['from']['name'],
