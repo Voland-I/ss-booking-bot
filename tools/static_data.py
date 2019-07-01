@@ -41,7 +41,8 @@ GAME_STATUSES = {
 }
 
 
-help_message_backup = ('<p style="font-size: 12px;"> To book time you need to enter '
+help_message_backup = (
+             '<p style="font-size: 12px;"> To book time you need to enter '
              'prefer time interval in one of the next formats:</p>'
              '\t<b>HH:MM-HH:MM</b>'
              'or'
@@ -49,4 +50,5 @@ help_message_backup = ('<p style="font-size: 12px;"> To book time you need to en
              '<p style="font-size: 12px">To see the '
              'list of booked times type *asterisks*\'list\'*asterisks*'
              'To cancel one of your booked time-slot'
-             'type *asterisks*\'cancel <number of slot>\'*asterisks*</p>')
+             'type *asterisks*\'cancel <number of slot>\'*asterisks*</p>'
+)

@@ -96,9 +96,10 @@ class DatabaseClient:
         return query
 
     def is_exists(self, item):
-        group_id = item['group_id']
-        start_delta, end_delta = item['start_delta'], item['end_delta']
-        start_end_delta = item['start_end_delta']
+        group_id = get_value_from_data_object(item, ('group_id',))
+        start_delta = get_value_from_data_object(item, ('start_delta',))
+        end_delta = get_value_from_data_object(item, ('end_delta',))
+        start_end_delta = get_value_from_data_object(item, ('start_end_delta',))
 
         collection = self._collections[group_id]
 
@@ -126,7 +127,7 @@ class DatabaseClient:
             self._set_tz(group_id, tzname)
 
     def save(self, item):
-        group_id = item['group_id']
+        group_id = get_value_from_data_object(item, ('group_id',))
         self._collections[group_id].insert_one(item)
 
     def delete_item(self, group_id, item_id):

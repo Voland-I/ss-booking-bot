@@ -25,20 +25,6 @@ class CommandsProcessor:
     # _list_handler) and _HELP_MESSAGE data attribute
     # with help-message.
 
-    # This attribute contains help-message as response to
-    # 'help' command.
-    _HELP_MESSAGE = '''
-        <p style="font-size: 12px;"> To book time you need to enter \n
-        prefer time interval in one of the next formats:</p>\n
-        \t<b>HH:MM-HH:MM</b>
-        or
-        \t<b>HH.MM-HH.MM</b>\n
-        <p style="font-size: 12px">To see the \n
-        list of booked times type <b>'list'</b>\n
-        To cancel one of your booked time-slot\n
-        type <b>'cancel <number of slot>'</b></p>
-    '''
-
     def __init__(self, db_instance, commands=None):
         '''
 
@@ -127,7 +113,7 @@ class CommandsProcessor:
         :rtype: str
         '''
 
-        return MESSAGES['help']
+        return get_value_from_data_object(MESSAGES, ('help', ))
 
     def _list_handler(self, command_entity, **kwargs):
         '''
@@ -189,10 +175,22 @@ class CommandsProcessor:
                         item_id = item_to_delete['_id']
                         self._db_instance.delete_item(group_id, item_id)
 
-                        response_message = (f'{CANCEL_COMMAND_HEADERS["deleted"]} '
-                                            f'{item_to_delete["start_time_str"]}-'
-                                            f'{item_to_delete["end_time_str"]}'
-                                            f'for user {item_to_delete["user_name"]}')
+                        header = get_value_from_data_object(CANCEL_COMMAND_HEADERS,
+                                                            ('deleted',))
+
+                        start_time_str = get_value_from_data_object(item_to_delete,
+                                                                    ('start_time_str',))
+
+                        end_time_str = get_value_from_data_object(item_to_delete,
+                                                                  ('end_time_str',))
+
+                        user_name = get_value_from_data_object(item_to_delete,
+                                                               ('user_name',))
+
+                        response_message = (f'{header} '
+                                            f'{start_time_str}-'
+                                            f'{end_time_str} '
+                                            f'for user {user_name}')
 
             return response_message
 

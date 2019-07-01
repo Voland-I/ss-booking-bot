@@ -76,9 +76,9 @@ def get_game_status(item, statuses):
     game_status = get_value_from_data_object(statuses, ('will_be', ))
 
     if start_delta <= now_delta <= end_delta:
-        game_status = statuses['in_process']
+        game_status = get_value_from_data_object(statuses, ('in_process', ))
     if end_delta < now_delta:
-        game_status = statuses['played']
+        game_status = get_value_from_data_object(statuses, ('played', ))
 
     return game_status
 

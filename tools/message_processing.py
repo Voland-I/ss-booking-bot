@@ -31,21 +31,21 @@ def make_message_text(header, all_items):
 
 def create_activity_object(request_data, response_msg, local_now_iso):
     response_object = {
-        'serviceUrl': request_data['serviceUrl'],
-        'type': request_data['type'],
+        'serviceUrl': get_value_from_data_object(request_data, ('serviceUrl',)),
+        'type': get_value_from_data_object(request_data, ('type', )),
         'from': {
-            'id': request_data['recipient']['id'],
-            'name': request_data['recipient']['name']
+            'id': get_value_from_data_object(request_data, ('recipient', 'id')),
+            'name': get_value_from_data_object(request_data, ('recipient', 'name',)),
         },
         'recipient': {
-            'id': request_data['from']['id'],
-            'name': request_data['from']['name']
+            'id': get_value_from_data_object(request_data, ('from', 'id')),
+            'name': get_value_from_data_object(request_data, ('from', 'name'))
         },
         'conversation': {
-            'id': request_data['conversation']['id']
+            'id': get_value_from_data_object(request_data, ('conversation', 'id',))
         },
-        'replyToId': request_data['id'],
-        'timestamp': local_now_iso,
+        'replyToId': get_value_from_data_object(request_data, ('replyToId',)),
+        'timestamp': get_value_from_data_object(request_data, ('timestamp',)),
         'text': response_msg,
     }
 
@@ -59,14 +59,14 @@ def create_response_object_for_user(request_data, response_msg, local_now_iso):
 
     response_object = {
         'bot': {
-            'id': request_data['recipient']['id'],
-            'name': request_data['recipient']['id']
+            'id': get_value_from_data_object(request_data, ('recipient', 'id')),
+            'name': get_value_from_data_object(request_data, ('recipient', 'name')),
         },
         'isGroup': 'false',
         'members': [
             {
-                'id': request_data['from']['id'],
-                'name': request_data['from']['name']
+                'id': get_value_from_data_object(request_data, ('from', 'name')),
+                'name': get_value_from_data_object(request_data, ('from', 'name')),
             },
         ],
         'topicName': 'Answer for your action',
@@ -83,11 +83,11 @@ def message_processing(db_instance, cp_instance, request_data):
 
     local_now_iso = get_local_now_time(tzname).isoformat()
 
-    request_message = request_data['text']
+    request_message = get_value_from_data_object(request_data, ('text',))
     time_strings = parse_time_deltas(request_message)
     time_deltas = make_time_deltas_from_str(*time_strings)
 
-    response_message = HEADERS['incorrect_enter']
+    response_message = get_value_from_data_object(HEADERS, ('incorrect_enter',))
     if all(time_deltas) and not is_past(request_data, time_strings):
         response_message = booking_processing(db_instance,
                                               time_deltas,
@@ -107,12 +107,12 @@ def message_processing(db_instance, cp_instance, request_data):
 
 
 def booking_processing(db_instance, time_deltas, time_strings, request_data):
-    group_id = request_data['conversation']['id']
+    group_id = get_value_from_data_object(request_data, ('conversation', 'id'))
 
-    header = HEADERS['time_booked']
+    header = get_value_from_data_object(HEADERS, ('time_booked', ))
     db_item = db_instance.create_item((time_deltas, time_strings), request_data)
     if not db_instance.is_exists(db_item):
-        header = HEADERS['accepted']
+        header = get_value_from_data_object(HEADERS, ('accepted', ))
         db_instance.save(db_item)
     all_items_in_collection = db_instance.get_all_items(group_id)
     response_message = make_message_text(header, all_items_in_collection)
